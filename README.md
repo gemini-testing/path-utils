@@ -1,1 +1,40 @@
-# path-utils
+[![Build
+Status](https://travis-ci.org/gemini-testing/glob-extra.png)](https://travis-ci.org/gemini-testing/glob-extra)
+
+# glob-extra
+
+Wrapper for utility [glob](https://github.com/isaacs/node-glob) with promises support which provides expanding of masks, dirs and files to absolute file paths.
+
+## Installation
+
+```bash
+$ npm install glob-extra
+```
+
+## Usage
+
+```js
+const globExtra = require('glob-extra');
+const paths = ['some/path', 'other/path/*.js', 'other/deep/path/**/*.js']
+
+// options are optional
+globExtra.expandPaths(paths, options)
+    .then((files) => {
+        // ['/absolute/some/path/file1.js',
+        // '/absolute/other/path/file2.js',
+        // '/absolute/other/deep/path/dir/file3.js']
+    })
+    .done();
+```
+
+### Options
+
+* **formats** *{String[]}* – files formats to expand; it will expand all files by default. For example:
+
+```js
+globExtra.expandPaths(paths, {formats: ['.txt', '.js']})
+    .then((files) => {
+        // will expand only js ant txt files
+    })
+    .done();
+```
