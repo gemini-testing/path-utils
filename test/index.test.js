@@ -8,16 +8,17 @@ describe('path-utils', () => {
     const sandbox = sinon.sandbox.create();
 
     let glob;
-    let pathUtils;
+    let globExtra;
 
     beforeEach(() => {
+        sandbox.stub(process, 'cwd').returns('');
         sandbox.stub(qfs, 'listTree');
         sandbox.stub(qfs, 'absolute');
         sandbox.stub(qfs, 'stat').returns(q({isFile: () => true}));
 
         glob = sandbox.stub();
 
-        pathUtils = proxyquire('../lib/index', {glob});
+        globExtra = proxyquire('../lib/index', {glob});
     });
 
     afterEach(() => sandbox.restore());
@@ -28,7 +29,7 @@ describe('path-utils', () => {
 
             qfs.absolute.withArgs('some/deep/path/file.js').returns('/absolute/some/deep/path/file.js');
 
-            return pathUtils.expandPaths(['some/deep/**/*.js'])
+            return globExtra.expandPaths(['some/deep/**/*.js'])
                 .then((absolutePaths) => {
                     assert.deepEqual(absolutePaths, ['/absolute/some/deep/path/file.js']);
                 });
@@ -37,7 +38,7 @@ describe('path-utils', () => {
         it('should throw an error if a mask does not match files', () => {
             glob.withArgs('bad/mask/*.js').yields(null, []);
 
-            return assert.isRejected(pathUtils.expandPaths(['bad/mask/*.js']), /Cannot find files by mask bad\/mask\/\*\.js/);
+            return assert.isRejected(globExtra.expandPaths(['bad/mask/*.js']), /Cannot find files by mask bad\/mask\/\*\.js/);
         });
 
         it('should get absolute file path from passed mask according to formats option', () => {
@@ -46,7 +47,7 @@ describe('path-utils', () => {
             qfs.absolute
                 .withArgs('some/path/file.js').returns('/absolute/some/path/file.js');
 
-            return pathUtils.expandPaths(['some/path/*.*'], {formats: ['.js']})
+            return globExtra.expandPaths(['some/path/*.*'], {formats: ['.js']})
                 .then((absolutePaths) => {
                     assert.deepEqual(absolutePaths, ['/absolute/some/path/file.js']);
                 });
@@ -57,7 +58,7 @@ describe('path-utils', () => {
 
             qfs.absolute.withArgs('some/path/file.js').returns('/absolute/some/path/file.js');
 
-            return pathUtils.expandPaths(['some/path/*.js', 'some/path/*.js'])
+            return globExtra.expandPaths(['some/path/*.js', 'some/path/*.js'])
                 .then((absolutePaths) => {
                     assert.deepEqual(absolutePaths, ['/absolute/some/path/file.js']);
                 });
@@ -78,7 +79,7 @@ describe('path-utils', () => {
                 .withArgs('some/path/first.js').returns('/absolute/some/path/first.js')
                 .withArgs('some/path/second.txt').returns('/absolute/some/path/second.txt');
 
-            return pathUtils.expandPaths(['some/path/'])
+            return globExtra.expandPaths(['some/path/'])
                 .then((absolutePaths) => {
                     assert.deepEqual(absolutePaths, ['/absolute/some/path/first.js', '/absolute/some/path/second.txt']);
                 });
@@ -91,7 +92,7 @@ describe('path-utils', () => {
 
             qfs.absolute.withArgs('some/path/first.js').returns('/absolute/some/path/first.js');
 
-            return pathUtils.expandPaths(['some/path/'], {formats: ['.js']})
+            return globExtra.expandPaths(['some/path/'], {formats: ['.js']})
                 .then((absolutePaths) => assert.deepEqual(absolutePaths, ['/absolute/some/path/first.js']));
         });
 
@@ -102,7 +103,7 @@ describe('path-utils', () => {
 
             qfs.absolute.withArgs('some/path/file.js').returns('/absolute/some/path/file.js');
 
-            return pathUtils.expandPaths(['some/path/', 'some/path/'])
+            return globExtra.expandPaths(['some/path/', 'some/path/'])
                 .then((absolutePaths) => {
                     assert.deepEqual(absolutePaths, ['/absolute/some/path/file.js']);
                 });
@@ -117,7 +118,7 @@ describe('path-utils', () => {
 
             qfs.absolute.withArgs('some/path/file.js').returns('/absolute/some/path/file.js');
 
-            return pathUtils.expandPaths(['some/path/'])
+            return globExtra.expandPaths(['some/path/'])
                 .then((absolutePaths) => {
                     assert.deepEqual(absolutePaths, ['/absolute/some/path/file.js']);
                 });
@@ -130,7 +131,7 @@ describe('path-utils', () => {
 
             qfs.absolute.withArgs('some/path/file.js').returns('/absolute/some/path/file.js');
 
-            return pathUtils.expandPaths(['some/path/file.js'])
+            return globExtra.expandPaths(['some/path/file.js'])
                 .then((absolutePaths) => {
                     assert.deepEqual(absolutePaths, ['/absolute/some/path/file.js']);
                 });
@@ -144,7 +145,7 @@ describe('path-utils', () => {
             qfs.absolute
                 .withArgs('some/path/file.js').returns('/absolute/some/path/file.js');
 
-            return pathUtils.expandPaths(['some/path/file.js', 'some/path/file.txt'], {formats: ['.js']})
+            return globExtra.expandPaths(['some/path/file.js', 'some/path/file.txt'], {formats: ['.js']})
                 .then((absolutePaths) => {
                     assert.deepEqual(absolutePaths, ['/absolute/some/path/file.js']);
                 });
@@ -155,9 +156,44 @@ describe('path-utils', () => {
 
             qfs.absolute.withArgs('some/path/file.js').returns('/absolute/some/path/file.js');
 
-            return pathUtils.expandPaths(['some/path/file.js', 'some/path/file.js'])
+            return globExtra.expandPaths(['some/path/file.js', 'some/path/file.js'])
                 .then((absolutePaths) => {
                     assert.deepEqual(absolutePaths, ['/absolute/some/path/file.js']);
+                });
+        });
+    });
+
+    describe('defaults', () => {
+        it('should use project root passed from root option', () => {
+            glob.withArgs('some/path/').yields(null, ['some/path/']);
+
+            qfs.stat.withArgs('/project/root/some/path').returns(q({isFile: () => false}));
+
+            qfs.listTree.withArgs('/project/root/some/path').returns(q(['/project/root/some/path/file.js']));
+
+            qfs.absolute.withArgs('/project/root/some/path/file.js')
+                .returns('/absolute/project/root/some/path/file.js');
+
+            return globExtra.expandPaths(['some/path/'], {root: '/project/root'})
+                .then((absolutePaths) => {
+                    assert.deepEqual(absolutePaths, ['/absolute/project/root/some/path/file.js']);
+                });
+        });
+
+        it('should use current project directory if project root is not passed from root option', () => {
+            glob.withArgs('some/path/').yields(null, ['some/path/']);
+
+            process.cwd.returns('/root');
+
+            qfs.stat.withArgs('/root/some/path').returns(q({isFile: () => false}));
+
+            qfs.listTree.withArgs('/root/some/path').returns(q(['/root/some/path/file.js']));
+
+            qfs.absolute.withArgs('/root/some/path/file.js').returns('/absolute/root/some/path/file.js');
+
+            return globExtra.expandPaths(['some/path/'])
+                .then((absolutePaths) => {
+                    assert.deepEqual(absolutePaths, ['/absolute/root/some/path/file.js']);
                 });
         });
     });
