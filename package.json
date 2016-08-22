@@ -1,6 +1,6 @@
 {
   "name": "glob-extra",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Utility which provides expanding of masks, dirs and files to absolute file paths.",
   "main": "lib/index.js",
   "scripts": {
