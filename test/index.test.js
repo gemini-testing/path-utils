@@ -13,7 +13,6 @@ describe('path-utils', () => {
     beforeEach(() => {
         sandbox.stub(process, 'cwd').returns('');
         sandbox.stub(qfs, 'listTree');
-        sandbox.stub(qfs, 'absolute');
         sandbox.stub(qfs, 'stat').returns(q({isFile: () => true}));
 
         glob = sandbox.stub();
@@ -24,6 +23,10 @@ describe('path-utils', () => {
     afterEach(() => sandbox.restore());
 
     describe('masks', () => {
+        beforeEach(() => {
+            sandbox.stub(qfs, 'absolute');
+        });
+
         it('should get absolute file path from passed mask', () => {
             glob.withArgs('some/deep/**/*.js').yields(null, ['some/deep/path/file.js']);
 
@@ -67,14 +70,14 @@ describe('path-utils', () => {
 
     describe('directories', () => {
         beforeEach(() => {
-            qfs.stat.withArgs('some/path/').returns(q({isFile: () => false}));
+            qfs.stat.withArgs('some/path').returns(q({isFile: () => false}));
+            sandbox.stub(qfs, 'absolute');
         });
 
         it('should get absolute paths for all files from passed dir', () => {
             glob.withArgs('some/path/').yields(null, ['some/path/']);
 
-            qfs.listTree.withArgs('some/path/').returns(q(['some/path/first.js', 'some/path/second.txt']));
-
+            qfs.listTree.withArgs('some/path').returns(q(['some/path/first.js', 'some/path/second.txt']));
             qfs.absolute
                 .withArgs('some/path/first.js').returns('/absolute/some/path/first.js')
                 .withArgs('some/path/second.txt').returns('/absolute/some/path/second.txt');
@@ -88,8 +91,7 @@ describe('path-utils', () => {
         it('should get absolute file paths according to formats option', () => {
             glob.withArgs('some/path/').yields(null, ['some/path/']);
 
-            qfs.listTree.withArgs('some/path/').returns(q(['some/path/first.js', 'some/path/second.txt']));
-
+            qfs.listTree.withArgs('some/path').returns(q(['some/path/first.js', 'some/path/second.txt']));
             qfs.absolute.withArgs('some/path/first.js').returns('/absolute/some/path/first.js');
 
             return globExtra.expandPaths(['some/path/'], {formats: ['.js']})
@@ -99,8 +101,7 @@ describe('path-utils', () => {
         it('should get uniq absolute file path from passed dirs', () => {
             glob.withArgs('some/path/').yields(null, ['some/path/']);
 
-            qfs.listTree.withArgs('some/path/').returns(q(['some/path/file.js']));
-
+            qfs.listTree.withArgs('some/path').returns(q(['some/path/file.js']));
             qfs.absolute.withArgs('some/path/file.js').returns('/absolute/some/path/file.js');
 
             return globExtra.expandPaths(['some/path/', 'some/path/'])
@@ -113,9 +114,7 @@ describe('path-utils', () => {
             glob.withArgs('some/path/').yields(null, ['some/path/']);
 
             qfs.stat.withArgs('some/path/dir').returns(q({isFile: () => false}));
-
-            qfs.listTree.withArgs('some/path/').returns(q(['some/path/file.js', 'some/path/dir']));
-
+            qfs.listTree.withArgs('some/path').returns(q(['some/path/file.js', 'some/path/dir']));
             qfs.absolute.withArgs('some/path/file.js').returns('/absolute/some/path/file.js');
 
             return globExtra.expandPaths(['some/path/'])
@@ -126,6 +125,10 @@ describe('path-utils', () => {
     });
 
     describe('files', () => {
+        beforeEach(() => {
+            sandbox.stub(qfs, 'absolute');
+        });
+
         it('should get absolute file path from passed file path', () => {
             glob.withArgs('some/path/file.js').yields(null, ['some/path/file.js']);
 
@@ -168,15 +171,11 @@ describe('path-utils', () => {
             glob.withArgs('some/path/').yields(null, ['some/path/']);
 
             qfs.stat.withArgs('/project/root/some/path').returns(q({isFile: () => false}));
-
             qfs.listTree.withArgs('/project/root/some/path').returns(q(['/project/root/some/path/file.js']));
-
-            qfs.absolute.withArgs('/project/root/some/path/file.js')
-                .returns('/absolute/project/root/some/path/file.js');
 
             return globExtra.expandPaths(['some/path/'], {root: '/project/root'})
                 .then((absolutePaths) => {
-                    assert.deepEqual(absolutePaths, ['/absolute/project/root/some/path/file.js']);
+                    assert.deepEqual(absolutePaths, ['/project/root/some/path/file.js']);
                 });
         });
 
@@ -186,14 +185,11 @@ describe('path-utils', () => {
             process.cwd.returns('/root');
 
             qfs.stat.withArgs('/root/some/path').returns(q({isFile: () => false}));
-
             qfs.listTree.withArgs('/root/some/path').returns(q(['/root/some/path/file.js']));
-
-            qfs.absolute.withArgs('/root/some/path/file.js').returns('/absolute/root/some/path/file.js');
 
             return globExtra.expandPaths(['some/path/'])
                 .then((absolutePaths) => {
-                    assert.deepEqual(absolutePaths, ['/absolute/root/some/path/file.js']);
+                    assert.deepEqual(absolutePaths, ['/root/some/path/file.js']);
                 });
         });
     });
