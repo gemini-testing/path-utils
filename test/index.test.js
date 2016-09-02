@@ -129,6 +129,17 @@ describe('path-utils', () => {
             sandbox.stub(qfs, 'absolute');
         });
 
+        it('should get absolute file path from passed string file path', () => {
+            glob.withArgs('some/path/file.js').yields(null, ['some/path/file.js']);
+
+            qfs.absolute.withArgs('some/path/file.js').returns('/absolute/some/path/file.js');
+
+            return globExtra.expandPaths('some/path/file.js')
+                .then((absolutePaths) => {
+                    assert.deepEqual(absolutePaths, ['/absolute/some/path/file.js']);
+                });
+        });
+
         it('should get absolute file path from passed file path', () => {
             glob.withArgs('some/path/file.js').yields(null, ['some/path/file.js']);
 
