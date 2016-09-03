@@ -2,11 +2,17 @@
   "name": "glob-extra",
   "version": "1.1.1",
   "description": "Utility which provides expanding of masks, dirs and files to absolute file paths.",
+  "bugs": "https://github.com/gemini-testing/glob-extra/issues",
   "main": "lib/index.js",
   "scripts": {
     "lint": "eslint .",
     "test-unit": "mocha test",
-    "test": "npm run lint && npm run test-unit"
+    "test": "npm run lint && npm run test-unit",
+    "cover": "istanbul cover _mocha test",
+    "coveralls": "npm i coveralls && npm run cover -- --report lcovonly && cat ./coverage/lcov.info | coveralls"
+  },
+  "engines": {
+    "node": ">= 4"
   },
   "repository": {
     "type": "git",
@@ -28,6 +34,7 @@
     "chai-as-promised": "^5.3.0",
     "eslint": "^3.1.1",
     "eslint-config-gemini-testing": "^2.2.0",
+    "istanbul": "^0.4.5",
     "mocha": "^2.4.5",
     "proxyquire": "^1.7.3",
     "sinon": "^1.17.2"
