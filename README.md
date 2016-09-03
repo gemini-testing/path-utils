@@ -1,7 +1,9 @@
-[![Build
-Status](https://travis-ci.org/gemini-testing/glob-extra.png)](https://travis-ci.org/gemini-testing/glob-extra)
-
 # glob-extra
+
+[![NPM version](https://img.shields.io/npm/v/glob-extra.svg?style=flat)](https://www.npmjs.org/package/glob-extra)
+[![Build Status](https://travis-ci.org/gemini-testing/glob-extra.svg?branch=master)](https://travis-ci.org/gemini-testing/glob-extra)
+[![Coverage Status](https://img.shields.io/coveralls/gemini-testing/glob-extra.svg?style=flat)](https://coveralls.io/r/gemini-testing/glob-extra?branch=master)
+[![Dependency Status](https://img.shields.io/david/gemini-testing/glob-extra.svg?style=flat)](https://david-dm.org/gemini-testing/glob-extra)
 
 Wrapper for utility [glob](https://github.com/isaacs/node-glob) with promises support which provides expanding of masks, dirs and files to absolute file paths.
 
