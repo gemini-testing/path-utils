@@ -7,4 +7,4 @@ matrix:
     - node_js: "6"
 
 after_success:
-  - if [ "x$COVERALLS" = "x1" ]; then npm run coveralls; fi
+  - if [ "$COVERALLS" = "1" ]; then npm run coveralls; fi
