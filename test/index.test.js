@@ -204,4 +204,27 @@ describe('path-utils', () => {
                 });
         });
     });
+
+    describe('glob options', () => {
+        beforeEach(() => sandbox.stub(qfs, 'absolute'));
+
+        it('should exclude file paths from passed masks', () => {
+            const globOpts = {ignore: ['some/other/*']};
+
+            glob.withArgs('some/**', globOpts).yields(null, ['some/path/file.js']);
+
+            return globExtra.expandPaths('some/**', {formats: ['.js']}, globOpts)
+                .then(() => assert.calledWith(glob, 'some/**', globOpts));
+        });
+    });
+
+    describe('isMasks', () => {
+        it('should return true if all passed files are specified as masks', () => {
+            assert.isTrue(globExtra.isMasks(['some/path/*', 'another/**']));
+        });
+
+        it('should return false if at least one of passed files is not a mask', () => {
+            assert.isFalse(globExtra.isMasks(['some/path/file.js', 'another/**']));
+        });
+    });
 });
