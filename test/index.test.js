@@ -38,10 +38,26 @@ describe('path-utils', () => {
                 });
         });
 
-        it('should throw an error if a mask does not match files', () => {
-            glob.withArgs('bad/mask/*.js').yields(null, []);
+        it('should throw error for unexistent file path', () => {
+            glob.withArgs('bad/mask/file.js').yields(null, []);
+            return assert.isRejected(globExtra.expandPaths(['bad/mask/file.js']), 'Cannot find files by mask bad/mask/file.js');
+        });
 
-            return assert.isRejected(globExtra.expandPaths(['bad/mask/*.js']), /Cannot find files by mask bad\/mask\/\*\.js/);
+        it('should throw error for unexistent directory path', () => {
+            glob.withArgs('bad/mask').yields(null, []);
+            return assert.isRejected(globExtra.expandPaths(['bad/mask']), 'Cannot find files by mask bad/mask');
+        });
+
+        it('should ignore masks which contain magic symbols', () => {
+            glob.withArgs('bad/mask/*.js').yields(null, []);
+            glob.withArgs('some/path/*.js').yields(null, ['some/path/file.js']);
+
+            qfs.absolute.returnsArg(0);
+
+            return globExtra.expandPaths([
+                'bad/mask/*.js',
+                'some/path/*.js'
+            ]).then((absolutePaths) => assert.deepEqual(absolutePaths, ['some/path/file.js']));
         });
 
         it('should get absolute file path from passed mask according to formats option', () => {
