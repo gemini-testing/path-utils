@@ -48,7 +48,7 @@ describe('path-utils', () => {
             return assert.isRejected(globExtra.expandPaths(['bad/mask']), 'Cannot find files by mask bad/mask');
         });
 
-        it('should ignore masks which contain magic symbols', () => {
+        it('should ignore masks which do not match to files', () => {
             glob.withArgs('bad/mask/*.js').yields(null, []);
             glob.withArgs('some/path/*.js').yields(null, ['some/path/file.js']);
 
@@ -234,13 +234,14 @@ describe('path-utils', () => {
         });
     });
 
-    describe('isMasks', () => {
-        it('should return true if all passed files are specified as masks', () => {
-            assert.isTrue(globExtra.isMasks(['some/path/*', 'another/**']));
+    describe('isMask', () => {
+        it('should return true if passed pattern specified as mask', () => {
+            assert.isOk(globExtra.isMask('some/path/*'));
+            assert.isOk(globExtra.isMask('another/**'));
         });
 
-        it('should return false if at least one of passed files is not a mask', () => {
-            assert.isFalse(globExtra.isMasks(['some/path/file.js', 'another/**']));
+        it('should return false if passed pattern is not a mask', () => {
+            assert.isNotOk(globExtra.isMask('some/path/file.js'));
         });
     });
 });
