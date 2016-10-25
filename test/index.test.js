@@ -38,10 +38,26 @@ describe('path-utils', () => {
                 });
         });
 
-        it('should throw an error if a mask does not match files', () => {
-            glob.withArgs('bad/mask/*.js').yields(null, []);
+        it('should throw error for unexistent file path', () => {
+            glob.withArgs('bad/mask/file.js').yields(null, []);
+            return assert.isRejected(globExtra.expandPaths(['bad/mask/file.js']), 'Cannot find files by mask bad/mask/file.js');
+        });
 
-            return assert.isRejected(globExtra.expandPaths(['bad/mask/*.js']), /Cannot find files by mask bad\/mask\/\*\.js/);
+        it('should throw error for unexistent directory path', () => {
+            glob.withArgs('bad/mask').yields(null, []);
+            return assert.isRejected(globExtra.expandPaths(['bad/mask']), 'Cannot find files by mask bad/mask');
+        });
+
+        it('should ignore masks which do not match to files', () => {
+            glob.withArgs('bad/mask/*.js').yields(null, []);
+            glob.withArgs('some/path/*.js').yields(null, ['some/path/file.js']);
+
+            qfs.absolute.returnsArg(0);
+
+            return globExtra.expandPaths([
+                'bad/mask/*.js',
+                'some/path/*.js'
+            ]).then((absolutePaths) => assert.deepEqual(absolutePaths, ['some/path/file.js']));
         });
 
         it('should get absolute file path from passed mask according to formats option', () => {
@@ -218,13 +234,14 @@ describe('path-utils', () => {
         });
     });
 
-    describe('isMasks', () => {
-        it('should return true if all passed files are specified as masks', () => {
-            assert.isTrue(globExtra.isMasks(['some/path/*', 'another/**']));
+    describe('isMask', () => {
+        it('should return true if passed pattern specified as mask', () => {
+            assert.isOk(globExtra.isMask('some/path/*'));
+            assert.isOk(globExtra.isMask('another/**'));
         });
 
-        it('should return false if at least one of passed files is not a mask', () => {
-            assert.isFalse(globExtra.isMasks(['some/path/file.js', 'another/**']));
+        it('should return false if passed pattern is not a mask', () => {
+            assert.isNotOk(globExtra.isMask('some/path/file.js'));
         });
     });
 });
