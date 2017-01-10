@@ -35,6 +35,12 @@ describe('path-utils', () => {
                 .then((paths) => assert.deepEqual(paths, ['some/deep/path/file.js']));
         });
 
+        it('should throw error for unexistent file path', () => {
+            glob.withArgs('bad/mask/file.js').yields(null, []);
+
+            return assert.isRejected(globExtra.expandPaths(['bad/mask/file.js']), 'Cannot find files by mask bad/mask/file.js');
+        });
+
         it('should ignore masks which do not match to files', () => {
             glob.withArgs('bad/mask/*.js').yields(null, []);
             glob.withArgs('some/path/*.js').yields(null, ['some/path/file.js']);
