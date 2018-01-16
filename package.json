@@ -17,7 +17,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git://github.com/gemini-testing/path-utils.git"
+    "url": "git://github.com/gemini-testing/glob-extra.git"
   },
   "keywords": [
     "expand",
@@ -27,8 +27,7 @@
   "dependencies": {
     "glob": "^7.0.5",
     "lodash": "^4.15.0",
-    "q": "^1.1.2",
-    "q-io": "^2.0.6"
+    "bluebird": "^3.5.1"
   },
   "devDependencies": {
     "chai": "^3.4.1",
@@ -38,6 +37,6 @@
     "istanbul": "^0.4.5",
     "mocha": "^2.4.5",
     "proxyquire": "^1.7.3",
-    "sinon": "^1.17.2"
+    "sinon": "^4.1.4"
   }
 }

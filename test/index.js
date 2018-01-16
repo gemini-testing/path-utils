@@ -1,8 +1,7 @@
 'use strict';
 
 const proxyquire = require('proxyquire');
-const qfs = require('q-io/fs');
-const q = require('q');
+const fs = require('fs');
 const utils = require('../lib/utils');
 
 describe('path-utils', () => {
@@ -13,21 +12,17 @@ describe('path-utils', () => {
 
     beforeEach(() => {
         sandbox.stub(process, 'cwd').returns('');
-        sandbox.stub(qfs, 'listTree');
-        sandbox.stub(qfs, 'stat').returns(q({isFile: () => true}));
-
         glob = sandbox.stub();
 
         globExtra = proxyquire('../lib/index', {glob});
+
+        sandbox.stub(utils, 'getFilePaths');
+        sandbox.stub(fs, 'statAsync').resolves({isFile: () => true});
     });
 
     afterEach(() => sandbox.restore());
 
     describe('masks', () => {
-        beforeEach(() => {
-            sandbox.stub(qfs, 'absolute');
-        });
-
         it('should get file path from passed mask', () => {
             glob.withArgs('some/deep/**/*.js').yields(null, ['some/deep/path/file.js']);
 
@@ -38,8 +33,6 @@ describe('path-utils', () => {
         it('should ignore masks which do not match to files', () => {
             glob.withArgs('bad/mask/*.js').yields(null, []);
             glob.withArgs('some/path/*.js').yields(null, ['some/path/file.js']);
-
-            qfs.absolute.returnsArg(0);
 
             return globExtra.expandPaths([
                 'bad/mask/*.js',
@@ -68,14 +61,13 @@ describe('path-utils', () => {
 
     describe('directories', () => {
         beforeEach(() => {
-            qfs.stat.withArgs('some/path').returns(q({isFile: () => false}));
-            sandbox.stub(qfs, 'absolute');
+            fs.statAsync.withArgs('some/path').resolves({isFile: () => false});
         });
 
         it('should get paths for all files from passed dir', () => {
             glob.withArgs('some/path').yields(null, ['some/path']);
 
-            qfs.listTree.withArgs('some/path').returns(q(['some/path/first.js', 'some/path/second.txt']));
+            utils.getFilePaths.withArgs('some/path').resolves(['some/path/first.js', 'some/path/second.txt']);
 
             return globExtra.expandPaths(['some/path'])
                 .then((paths) => {
@@ -86,7 +78,7 @@ describe('path-utils', () => {
         it('should get file paths according to formats option', () => {
             glob.withArgs('some/path').yields(null, ['some/path']);
 
-            qfs.listTree.withArgs('some/path').returns(q(['some/path/first.js', 'some/path/second.txt']));
+            utils.getFilePaths.withArgs('some/path').resolves(['some/path/first.js', 'some/path/second.txt']);
 
             return globExtra.expandPaths(['some/path'], {formats: ['.js']})
                 .then((paths) => assert.deepEqual(paths, ['some/path/first.js']));
@@ -95,21 +87,9 @@ describe('path-utils', () => {
         it('should get uniq absolute file path from passed dirs', () => {
             glob.withArgs('some/path').yields(null, ['some/path']);
 
-            qfs.listTree.withArgs('some/path').returns(q(['some/path/file.js']));
+            utils.getFilePaths.withArgs('some/path').resolves(['some/path/file.js']);
 
             return globExtra.expandPaths(['some/path', 'some/path'])
-                .then((paths) => {
-                    assert.deepEqual(paths, ['some/path/file.js']);
-                });
-        });
-
-        it('should get only file paths from dir tree', () => {
-            glob.withArgs('some/path').yields(null, ['some/path']);
-
-            qfs.stat.withArgs('some/path/dir').returns(q({isFile: () => false}));
-            qfs.listTree.withArgs('some/path').returns(q(['some/path/file.js', 'some/path/dir']));
-
-            return globExtra.expandPaths(['some/path'])
                 .then((paths) => {
                     assert.deepEqual(paths, ['some/path/file.js']);
                 });
@@ -117,10 +97,6 @@ describe('path-utils', () => {
     });
 
     describe('files', () => {
-        beforeEach(() => {
-            sandbox.stub(qfs, 'absolute');
-        });
-
         it('should get file path from passed string file path', () => {
             glob.withArgs('some/path/file.js').yields(null, ['some/path/file.js']);
 
@@ -164,8 +140,8 @@ describe('path-utils', () => {
         it('should use project root passed from root option', () => {
             glob.withArgs('some/path/').yields(null, ['some/path/']);
 
-            qfs.stat.withArgs('/project/root/some/path').returns(q({isFile: () => false}));
-            qfs.listTree.withArgs('/project/root/some/path').returns(q(['/project/root/some/path/file.js']));
+            fs.statAsync.withArgs('/project/root/some/path').resolves({isFile: () => false});
+            utils.getFilePaths.withArgs('/project/root/some/path').resolves(['/project/root/some/path/file.js']);
 
             return globExtra.expandPaths(['some/path/'], {root: '/project/root'})
                 .then((paths) => {
@@ -175,8 +151,6 @@ describe('path-utils', () => {
     });
 
     describe('glob options', () => {
-        beforeEach(() => sandbox.stub(qfs, 'absolute'));
-
         it('should exclude file paths from passed masks', () => {
             const globOpts = {ignore: ['some/other/*']};
 
@@ -199,7 +173,7 @@ describe('path-utils', () => {
     });
 
     describe('project root', () => {
-        beforeEach(() => sandbox.stub(utils, 'isFile').returns(q(true)));
+        beforeEach(() => sandbox.stub(utils, 'isFile').resolves(true));
 
         it('shout resolve relative paths using project root', () => {
             glob.withArgs('some/path').yields(null, ['some/path/file.js']);
