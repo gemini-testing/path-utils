@@ -1,6 +1,6 @@
 # glob-extra
 
-Wrapper for utility [glob](https://github.com/isaacs/node-glob) with promises support which provides expanding of masks, dirs and files to absolute file paths.
+Wrapper for utility [fast-glob](https://github.com/mrmlnc/fast-glob) with promises support which provides expanding of masks, dirs and files to absolute file paths.
 
 [![NPM version](https://img.shields.io/npm/v/glob-extra.svg?style=flat)](https://www.npmjs.org/package/glob-extra)
 [![Build Status](https://travis-ci.org/gemini-testing/glob-extra.svg?branch=master)](https://travis-ci.org/gemini-testing/glob-extra)
