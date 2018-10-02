@@ -25,9 +25,11 @@
     "masks"
   ],
   "dependencies": {
+    "bluebird": "^3.5.1",
+    "fast-glob": "^2.2.3",
     "glob": "^7.0.5",
     "lodash": "^4.15.0",
-    "bluebird": "^3.5.1"
+    "minimatch": "^3.0.4"
   },
   "devDependencies": {
     "chai": "^3.4.1",
