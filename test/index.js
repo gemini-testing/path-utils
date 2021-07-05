@@ -23,6 +23,12 @@ describe('path-utils', () => {
     afterEach(() => sandbox.restore());
 
     describe('masks', () => {
+        it('should normalize backslashes to forward slashes (windows)', async () => {
+            await globExtra.expandPaths('\\some\\path\\**');
+
+            assert.calledOnceWithMatch(fastGlob, '/some/path/*');
+        });
+
         it('should get file path from passed mask', () => {
             fastGlob.withArgs('some/deep/**/*.js').resolves(['some/deep/path/file.js']);
 
@@ -138,33 +144,43 @@ describe('path-utils', () => {
 
     describe('defaults', () => {
         it('should use project root passed from root option', () => {
-            fastGlob.withArgs('some/path/', {onlyFiles: false}).resolves(['some/path/']);
+            fastGlob.withArgs('some/path', {onlyFiles: false}).resolves(['some/path']);
 
             fs.statAsync.withArgs('/project/root/some/path').resolves({isFile: () => false});
             utils.getFilePaths.withArgs('/project/root/some/path').resolves(['/project/root/some/path/file.js']);
 
-            return globExtra.expandPaths(['some/path/'], {root: '/project/root'})
+            return globExtra.expandPaths(['some/path'], {root: '/project/root'})
                 .then((paths) => {
                     assert.deepEqual(paths, ['/project/root/some/path/file.js']);
                 });
         });
 
         it('should use passed glob options', () => {
-            fastGlob.withArgs('some/path/', {onlyFiles: true}).resolves([]);
+            fastGlob.withArgs('some/path', {onlyFiles: true}).resolves([]);
 
-            return globExtra.expandPaths(['some/path/'], {}, {onlyFiles: true})
+            return globExtra.expandPaths(['some/path'], {}, {onlyFiles: true})
                 .then((paths) => assert.deepEqual(paths, []));
         });
     });
 
     describe('glob options', () => {
-        it('should exclude file paths from passed masks', () => {
-            const globOpts = {ignore: ['some/other/*']};
+        describe('"ignore" option', () => {
+            it('should normalize backslashes to forward slashes (windows)', async () => {
+                const globOpts = {ignore: ['\\some\\path\\*']};
 
-            fastGlob.withArgs('some/**', globOpts).resolves(['some/path/file.js']);
+                await globExtra.expandPaths('some/**', {}, globOpts);
 
-            return globExtra.expandPaths('some/**', {}, globOpts)
-                .then(() => assert.calledWith(fastGlob, 'some/**', globOpts));
+                assert.calledOnceWithMatch(fastGlob, sinon.match.any, {ignore: ['/some/path/*']});
+            });
+
+            it('should exclude file paths from passed masks', () => {
+                const globOpts = {ignore: ['some/other/*']};
+
+                fastGlob.withArgs('some/**', globOpts).resolves(['some/path/file.js']);
+
+                return globExtra.expandPaths('some/**', {}, globOpts)
+                    .then(() => assert.calledWith(fastGlob, 'some/**', globOpts));
+            });
         });
 
         it('should omit fields with "undefined" value', () => {
